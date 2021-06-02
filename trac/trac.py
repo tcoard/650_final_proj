@@ -1,3 +1,7 @@
+# PREREQUISITES: Must install TRAC files according to https://github.com/nafizh/TRAC/blob/master/README.md
+
+# CJ
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -99,7 +103,6 @@ def build_result_file(target_fasta, predictions):
         
     
 if __name__ == '__main__':
-    #print ('hello world')
     target_fasta = sys.argv[1] 
     print ("\n")
     print ("Creating a csv file for doing prediction!")
