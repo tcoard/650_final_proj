@@ -29,10 +29,10 @@ from sklearn.metrics import (
 
 # Antibiotic dicitonary. Lables are converted to indices, and a soft-voting classification strategy is employed
 # Set paths for the
-DATASET = 40
+DATASET = 100
 FASTA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fasta", f"pbert{DATASET}.fa")
 EMB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "embeds", f"protbert_mean_embeddings{DATASET}.pkl")
-NUM_FOLDS = 5
+NUM_FOLDS = 10
 MAX_SEQ_LEN = 1024
 MIN_DRUG_RES = 50
 
@@ -139,12 +139,12 @@ def filter_embeddings(header_emb):
         else:
             res_count[res] += 1
 
+    res_to_keep = sorted(filter(lambda res: res_count[res] > MIN_DRUG_RES, list(res_count)))
     for header in list(header_emb):
         res = header.split("|")[-1]
-        if res_count[res] < MIN_DRUG_RES:
+        if res not in res_to_keep:
             del header_emb[header]
-
-    return header_emb
+    return header_emb, res_to_keep
 
 
 def main():
@@ -153,31 +153,13 @@ def main():
         header_emb = pickle.load(open(EMB_PATH, 'rb'))
     else:
         header_emb = create_embeddings()
-    header_emb = filter_embeddings(header_emb)
+    header_emb, resistances = filter_embeddings(header_emb)
 
-    drug_res = {
-        "BETA-LACTAM": 0,
-        "AMINOGLYCOSIDE": 1,
-        "TETRACYCLINE": 2,
-        "GLYCOPEPTIDE": 3,
-        "PHENICOL": 4,
-        "FOLATE-SYNTHESIS-INHABITOR": 5,
-        "RIFAMYCIN": 6,
-        "TRIMETHOPRIM": 7,
-        "SULFONAMIDE": 8,
-        "MACROLIDE": 9,
-        "FOSFOMYCIN": 10,
-        "QUINOLONE": 11,
-        "STREPTOGRAMIN": 12,
-        "MACROLIDE/LINCOSAMIDE/STREPTOGRAMIN": 13,
-        "MULTIDRUG": 14,
-        "BACITRACIN": 15,
-    }
     ys = []
     Xs = []
     for header in header_emb:
         Xs.append(header_emb[header])
-        ys.append(drug_res[header.split("|")[-1]])
+        ys.append(resistances.index(header.split("|")[-1]))
 
     train_size = 0.8
     Xs_train, Xs_test, ys_train, ys_test = train_test_split(Xs, ys, train_size=train_size, random_state=42)
