@@ -2,3 +2,4 @@ tags*
 trac/TRAC
 !facebookai/embeds/coala40embeds.zip
 facebookai/embeds
+*/embeds/
