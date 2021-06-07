@@ -1,9 +1,7 @@
 #Code adapted from https://github.com/facebookresearch/esm/blob/master/examples/variant_prediction.ipynb
 # & https://github.com/nafizh/TRAC/blob/master/utils.py
 
-# This file runs 2 classifiers using the embeddings from the Facebook AI paper: ESM
-# The classifiers are sent through a grid search for the best model parameters and then 
-# passed through a 10-fold cross-validator with fold data printed out to the terminal
+# This file runs 2 classifiers using the embeddings from the SeqVec paper
 
 # CJ
 
@@ -89,17 +87,23 @@ ab_res_class_dict = {0:'BETA-LACTAM', 1:'AMINOGLYCOSIDE', 2:'TETRACYCLINE', 3:'G
                      4:'PHENICOL', 5:'FOLATE-SYNTHESIS-INHABITOR', 6:'RIFAMYCIN', 7:'TRIMETHOPRIM', 
                      8:'SULFONAMIDE', 9:'MACROLIDE', 10:'FOSFOMYCIN', 11:'QUINOLONE', 
                      12:'STREPTOGRAMIN', 13:'MACROLIDE/LINCOSAMIDE/STREPTOGRAMIN', 
-                     14: 'MULTIDRUG', 15: 'BACITRACIN', 16: 'MLS', 17: 'POLYMYXIN'} #Added 16 & 17 for COALA100
+                     14: 'MULTIDRUG', 15: 'BACITRACIN'}
 
 # Set paths for the 
-FASTA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "esm100.fa")
-EMB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "embeds", "coala_100_reprs")
+FASTA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "coala40.fa")
+EMB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "embeds", "coala40.npz")
 EMB_LAYER = 34
+
+data = np.load(EMB_PATH)
+# for item in data.files:
+#     this_array = data[item]
+#     print(item)
 
 ys = []
 Xs = []
 for header, _seq in esm.data.read_fasta(FASTA_PATH):
     scaled_effect = header.split('|')[-1]
+    embedding_designation = header.split('|')[1]
     found = False
     for key, value in ab_res_class_dict.items():
         if scaled_effect == value:
@@ -109,10 +113,9 @@ for header, _seq in esm.data.read_fasta(FASTA_PATH):
     if not found:
         print("Could not find dictionary entry for label: "+scaled_effect)
         continue
-    file_name = header[1:].replace('|', '_')
-    fn = f'{EMB_PATH}/{file_name}.pt'
-    embs = torch.load(fn)
-    Xs.append(embs['mean_representations'][EMB_LAYER])
+    #Now search for the data in the embeddings file
+    embedding = torch.tensor(data[embedding_designation]).sum(dim=0)
+    Xs.append(embedding)
 Xs = torch.stack(Xs, dim=0).numpy()
 print(len(ys))
 print(Xs.shape)
@@ -138,8 +141,8 @@ svm_grid = {
     'gamma': ['scale'],
 }
 
-cls_list = [KNeighborsClassifier, SVC]
-param_grid_list = [knn_grid, svm_grid]
+cls_list = [SVC] #, SVC]
+param_grid_list = [svm_grid] #, svm_grid]
 
 
 result_list = []
@@ -159,7 +162,7 @@ for cls_name, param_grid in zip(cls_list, param_grid_list):
     grid_list.append(grid)
 
 result_list[0].sort_values('rank_test_score')[:5]
-result_list[1].sort_values('rank_test_score')
+# result_list[1].sort_values('rank_test_score')
 
 Xs_test_pca = pca.transform(Xs_test)
 for grid in grid_list:
