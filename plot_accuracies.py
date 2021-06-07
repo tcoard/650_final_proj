@@ -131,16 +131,28 @@ def plot_metric(data_path, which_dataset, which_metric, save_plot=False):
     ax.set_xticks(np.linspace(0, 1, 11))
     
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
     if save_plot: 
         plt.savefig(os.path.join(OUT_PATH, which_dataset+"_"+which_metric+".png"))
 
 
 if __name__ == '__main__':
-    dataset = "Coala40"
-    metric = "Accuracy"
+    # A little misleading, I know, but it works!
+    save_all_plots = False
+    save_any_plots = False
 
-    plot_metric(DATA_PATH, dataset, metric, save_plot=False)
+    dataset_single = "Coala40"
+    metric_single = "Accuracy"
+
+    datasets = ["Coala40", "Coala70", "Coala100"]
+    metrics = ["Accuracy", "False Positives", "False Negatives", "Recall", "Precision", "Specificity", "MCC (Matthews correlation coefficient", "F1 Score"]
+
+    if save_all_plots:
+        for dataset in datasets:
+            for metric in metrics:
+                plot_metric(DATA_PATH, dataset, metric, save_plot=save_any_plots)
+    else:
+        plot_metric(DATA_PATH, dataset_single, metric_single, save_plot=save_any_plots)
     
     
