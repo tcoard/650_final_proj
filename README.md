@@ -1,2 +1,1 @@
-# Warning
-Many of these scripts are very rough and will require configuration to run at this time.
+This is the repository for our final project for Statistical Analysis of Genomics/Computational Metagenomics.
